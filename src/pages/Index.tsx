@@ -1,13 +1,36 @@
-import { useState } from "react";
-import { ArrowRight, MessageCircle, Sparkles, Globe } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight, MessageCircle, Sparkles, Globe, History, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LanguageSelector, languages, type Language } from "@/components/LanguageSelector";
 import { ConversationView } from "@/components/ConversationView";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, signOut, loading } = useAuth();
   const [sourceLanguage, setSourceLanguage] = useState<Language>(languages[0]); // French
-  const [targetLanguage, setTargetLanguage] = useState<Language>(languages[0]); // French (to reply in)
+  const [targetLanguage, setTargetLanguage] = useState<Language>(languages[0]); // French
   const [isInConversation, setIsInConversation] = useState(false);
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   if (isInConversation) {
     return (
@@ -22,20 +45,49 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="container pt-8 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl gradient-warm flex items-center justify-center shadow-glow">
-            <MessageCircle className="w-6 h-6 text-primary-foreground" />
+      <header className="container pt-6 pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl gradient-warm flex items-center justify-center shadow-glow">
+              <MessageCircle className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">ConvoHelper</h1>
+              <p className="text-sm text-muted-foreground">Your conversation companion</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">ConvoHelper</h1>
-            <p className="text-sm text-muted-foreground">Your conversation companion</p>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/history")}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-colors"
+              title="Conversation History"
+            >
+              <History className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => signOut()}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-5 h-5 text-muted-foreground" />
+            </button>
           </div>
         </div>
       </header>
 
+      {/* User Greeting */}
+      {user.email && (
+        <div className="container pb-2 animate-fade-in">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <User className="w-4 h-4" />
+            <span>Welcome, {user.user_metadata?.display_name || user.email}</span>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
-      <section className="container py-8 animate-fade-in">
+      <section className="container py-6 animate-fade-in">
         <div className="bg-card rounded-3xl p-6 shadow-soft border border-border">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
@@ -59,13 +111,13 @@ const Index = () => {
           selectedLanguage={sourceLanguage}
           onSelect={setSourceLanguage}
         />
-        
+
         <div className="flex items-center justify-center py-2">
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
             <Globe className="w-5 h-5 text-muted-foreground" />
           </div>
         </div>
-        
+
         <LanguageSelector
           label="Help me reply in"
           selectedLanguage={targetLanguage}
@@ -74,7 +126,7 @@ const Index = () => {
       </section>
 
       {/* Start Button */}
-      <section className="container py-8 mt-auto animate-slide-up" style={{ animationDelay: "0.2s" }}>
+      <section className="container py-6 mt-auto animate-slide-up" style={{ animationDelay: "0.2s" }}>
         <Button
           variant="gradient"
           size="xl"
@@ -84,7 +136,7 @@ const Index = () => {
           Start Conversation
           <ArrowRight className="w-5 h-5" />
         </Button>
-        
+
         <p className="text-center text-sm text-muted-foreground mt-4">
           Tap the microphone to begin listening
         </p>
