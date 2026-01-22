@@ -1,12 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/capacitor.json",
-  "appId": "app.lovable.685046ff95b64bafbf3d8e19a15630a6",
-  "appName": "ConvoHelper",
+  "appId": "app.convo.assistant",
+  "appName": "Convo",
   "webDir": "dist",
-  "server": {
-    "url": "https://685046ff-95b6-4baf-bf3d-8e19a15630a6.lovableproject.com?forceHideBadge=true",
-    "cleartext": true
-  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 2000,

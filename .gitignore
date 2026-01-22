@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Capacitor native platforms
+# android/ - kept in git for CI builds
+ios/
+
+# Android build outputs (keep source, ignore builds)
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
+android/capacitor-cordova-android-plugins/build/
