@@ -144,6 +144,14 @@
   .shadow-elevated {
     box-shadow: var(--shadow-elevated);
   }
+
+  .pt-safe-top {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+
+  .pb-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
 }
 
 /* Listening pulse animation */

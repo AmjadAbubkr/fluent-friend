@@ -9,8 +9,17 @@ import { useAuth } from "@/contexts/AuthContext";
 const Index = () => {
   const navigate = useNavigate();
   const { user, signOut, loading } = useAuth();
-  const [sourceLanguage, setSourceLanguage] = useState<Language>(languages[0]); // French
-  const [targetLanguage, setTargetLanguage] = useState<Language>(languages[0]); // French
+
+  // App Mode State
+  const [activeTab, setActiveTab] = useState<"helper" | "translator">("helper");
+
+  // Helper Mode State (Single language)
+  const [conversationLanguage, setConversationLanguage] = useState<Language>(languages[0]);
+
+  // Translator Mode State (Dual language)
+  const [sourceLanguage, setSourceLanguage] = useState<Language>(languages[0]); // Them
+  const [targetLanguage, setTargetLanguage] = useState<Language>(languages[1]); // Me
+
   const [isInConversation, setIsInConversation] = useState(false);
 
   // Redirect to auth if not logged in
@@ -35,15 +44,17 @@ const Index = () => {
   if (isInConversation) {
     return (
       <ConversationView
-        sourceLanguage={sourceLanguage}
-        targetLanguage={targetLanguage}
+        // If helper, source & target are the same (listen in X, reply in X)
+        sourceLanguage={activeTab === "helper" ? conversationLanguage : sourceLanguage}
+        targetLanguage={activeTab === "helper" ? conversationLanguage : targetLanguage}
+        mode={activeTab === "helper" ? "helper" : "translate"}
         onBack={() => setIsInConversation(false)}
       />
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pt-safe-top pb-safe-bottom bg-gradient-surface">
       {/* Header */}
       <header className="container pt-6 pb-4">
         <div className="flex items-center justify-between">
@@ -52,8 +63,8 @@ const Index = () => {
               <MessageCircle className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">ConvoHelper</h1>
-              <p className="text-sm text-muted-foreground">Your conversation companion</p>
+              <h1 className="text-xl font-bold text-foreground">Convo</h1>
+              <p className="text-sm text-muted-foreground">Your AI Assistant</p>
             </div>
           </div>
 
@@ -61,14 +72,12 @@ const Index = () => {
             <button
               onClick={() => navigate("/history")}
               className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-colors"
-              title="Conversation History"
             >
               <History className="w-5 h-5 text-muted-foreground" />
             </button>
             <button
               onClick={() => signOut()}
               className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-colors"
-              title="Sign Out"
             >
               <LogOut className="w-5 h-5 text-muted-foreground" />
             </button>
@@ -76,91 +85,115 @@ const Index = () => {
         </div>
       </header>
 
-      {/* User Greeting */}
-      {user.email && (
-        <div className="container pb-2 animate-fade-in">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <User className="w-4 h-4" />
-            <span>Welcome, {user.user_metadata?.display_name || user.email}</span>
-          </div>
+      {/* Mode Tabs */}
+      <div className="container px-4">
+        <div className="flex bg-secondary/50 rounded-2xl p-1 mb-6">
+          <button
+            onClick={() => setActiveTab("helper")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === "helper"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+              }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            Convo Helper
+          </button>
+          <button
+            onClick={() => setActiveTab("translator")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === "translator"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+              }`}
+          >
+            <Globe className="w-4 h-4" />
+            Translator
+          </button>
         </div>
+      </div>
+
+      {/* Helper Mode Content */}
+      {activeTab === "helper" && (
+        <main className="container flex-1 flex flex-col animate-fade-in">
+          <div className="bg-card rounded-3xl p-6 shadow-soft border border-border mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <h2 className="font-semibold text-foreground">Co-Pilot Mode</h2>
+            </div>
+            <p className="text-muted-foreground">
+              I'll listen to the conversation in {conversationLanguage.name} and suggest smart replies to keep it going.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <LanguageSelector
+              label="Conversation Language"
+              selectedLanguage={conversationLanguage}
+              onSelect={setConversationLanguage}
+            />
+          </div>
+
+          <div className="mt-auto py-6">
+            <Button
+              variant="gradient"
+              size="xl"
+              className="w-full"
+              onClick={() => setIsInConversation(true)}
+            >
+              Start Helper
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </div>
+        </main>
       )}
 
-      {/* Hero Section */}
-      <section className="container py-6 animate-fade-in">
-        <div className="bg-card rounded-3xl p-6 shadow-soft border border-border">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary" />
+      {/* Translator Mode Content */}
+      {activeTab === "translator" && (
+        <main className="container flex-1 flex flex-col animate-fade-in">
+          <div className="bg-card rounded-3xl p-6 shadow-soft border border-border mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                <Globe className="w-5 h-5 text-accent" />
+              </div>
+              <h2 className="font-semibold text-foreground">Live Translator</h2>
             </div>
-            <div>
-              <h2 className="font-semibold text-foreground">AI-Powered Replies</h2>
-              <p className="text-sm text-muted-foreground">Never struggle to respond again</p>
+            <p className="text-muted-foreground">
+              I'll translate what they say in {sourceLanguage.name} to {targetLanguage.name} (Text + Speech).
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <LanguageSelector
+              label="They Speak"
+              selectedLanguage={sourceLanguage}
+              onSelect={setSourceLanguage}
+            />
+
+            <div className="flex justify-center">
+              <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90" />
             </div>
+
+            <LanguageSelector
+              label="I Speak / Understand"
+              selectedLanguage={targetLanguage}
+              onSelect={setTargetLanguage}
+            />
           </div>
-          <p className="text-muted-foreground leading-relaxed">
-            Understand what others say but struggle to reply? I'll listen to the conversation and suggest natural responses in real-time.
-          </p>
-        </div>
-      </section>
 
-      {/* Language Selection */}
-      <section className="container py-4 space-y-4 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-        <LanguageSelector
-          label="I understand (they speak)"
-          selectedLanguage={sourceLanguage}
-          onSelect={setSourceLanguage}
-        />
-
-        <div className="flex items-center justify-center py-2">
-          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-            <Globe className="w-5 h-5 text-muted-foreground" />
-          </div>
-        </div>
-
-        <LanguageSelector
-          label="Help me reply in"
-          selectedLanguage={targetLanguage}
-          onSelect={setTargetLanguage}
-        />
-      </section>
-
-      {/* Start Button */}
-      <section className="container py-6 mt-auto animate-slide-up" style={{ animationDelay: "0.2s" }}>
-        <Button
-          variant="gradient"
-          size="xl"
-          className="w-full"
-          onClick={() => setIsInConversation(true)}
-        >
-          Start Conversation
-          <ArrowRight className="w-5 h-5" />
-        </Button>
-
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          Tap the microphone to begin listening
-        </p>
-      </section>
-
-      {/* Features Grid */}
-      <section className="container pb-8">
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { icon: "🎧", label: "Listen" },
-            { icon: "🤖", label: "Generate" },
-            { icon: "🗣️", label: "Speak" },
-          ].map((feature, i) => (
-            <div
-              key={feature.label}
-              className="bg-card rounded-2xl p-4 text-center shadow-soft border border-border animate-scale-in"
-              style={{ animationDelay: `${0.3 + i * 0.1}s` }}
+          <div className="mt-auto py-6">
+            <Button
+              variant="gradient"
+              size="xl"
+              className="w-full"
+              onClick={() => setIsInConversation(true)}
             >
-              <span className="text-2xl mb-2 block">{feature.icon}</span>
-              <span className="text-sm font-medium text-muted-foreground">{feature.label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+              Start Translator
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </div>
+        </main>
+      )}
     </div>
   );
 };

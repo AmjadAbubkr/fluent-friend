@@ -17,13 +17,14 @@ interface Message {
   timestamp: Date;
 }
 
-interface ConversationViewProps {
+export interface ConversationViewProps {
   sourceLanguage: Language;
   targetLanguage: Language;
+  mode: "helper" | "translate";
   onBack: () => void;
 }
 
-export function ConversationView({ sourceLanguage, targetLanguage, onBack }: ConversationViewProps) {
+export function ConversationView({ sourceLanguage, targetLanguage, mode, onBack }: ConversationViewProps) {
   const { user } = useAuth();
   const { createConversation, addMessage: saveMessage } = useConversations();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,7 +32,7 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const lastTranscriptRef = useRef("");
-  
+
   const {
     isListening,
     transcript,
@@ -79,11 +80,11 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
       await saveMessage(conversationId, text, false);
     }
 
-    // Generate AI response
+    // Generate AI response or Translation
     setIsProcessing(true);
     try {
-      const response = await generateAIResponse(text, targetLanguage.code, sourceLanguage.code);
-      
+      const response = await generateAIResponse(text, targetLanguage.code, sourceLanguage.code, mode);
+
       const replyMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: response,
@@ -95,6 +96,11 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
       // Save reply to database
       if (conversationId) {
         await saveMessage(conversationId, response, true);
+      }
+
+      // Auto-play translation if in translate mode
+      if (mode === "translate") {
+        handlePlayAudio(replyMessage.id, response);
       }
     } catch (err) {
       console.error("Error generating response:", err);
@@ -108,7 +114,8 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
   const generateAIResponse = async (
     heardText: string,
     replyLanguage: string,
-    sourceLanguage: string
+    sourceLanguage: string,
+    mode: "helper" | "translate"
   ): Promise<string> => {
     try {
       const { data, error } = await supabase.functions.invoke("generate-reply", {
@@ -116,6 +123,7 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
           heardText,
           replyLanguage,
           sourceLanguage,
+          mode,
         },
       });
 
@@ -123,14 +131,7 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
       return data.reply;
     } catch (err) {
       console.error("AI generation error:", err);
-      // Fallback response
-      const fallbacks: Record<string, string> = {
-        fr: "Je suis désolé, je n'ai pas compris. Pouvez-vous répéter?",
-        en: "I'm sorry, I didn't understand. Could you repeat that?",
-        es: "Lo siento, no entendí. ¿Puede repetir?",
-        de: "Es tut mir leid, ich habe nicht verstanden. Können Sie das wiederholen?",
-      };
-      return fallbacks[replyLanguage] || fallbacks.en;
+      return "Sorry, could not process that request.";
     }
   };
 
@@ -159,7 +160,7 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pt-safe-top pb-safe-bottom">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container flex items-center justify-between h-16">
@@ -201,9 +202,13 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Ready to help</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              {mode === "helper" ? "Conversational Helper" : "Ready to Translate"}
+            </h3>
             <p className="text-muted-foreground max-w-xs">
-              Tap the microphone to start listening. I'll help you respond in {targetLanguage.name}.
+              {mode === "helper"
+                ? `I'll listent to ${sourceLanguage.name} and suggest replies in ${targetLanguage.name}.`
+                : `Say something in ${sourceLanguage.name} to translate to ${targetLanguage.name}.`}
             </p>
           </div>
         )}
@@ -232,7 +237,9 @@ export function ConversationView({ sourceLanguage, targetLanguage, onBack }: Con
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-muted-foreground">Generating your response...</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {mode === "helper" ? "Generating reply..." : "Translating..."}
+              </p>
               <WaveformVisualizer isActive={true} className="mt-2" />
             </div>
           </div>

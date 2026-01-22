@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { heardText, replyLanguage, sourceLanguage } = await req.json();
+    const { heardText, replyLanguage, sourceLanguage, mode = "reply" } = await req.json();
 
     if (!heardText || !replyLanguage) {
       return new Response(
@@ -40,23 +40,38 @@ Deno.serve(async (req) => {
     const sourceLangName = languageNames[sourceLanguage] || sourceLanguage;
     const replyLangName = languageNames[replyLanguage] || replyLanguage;
 
-    console.log(`Generating reply for: "${heardText}" from ${sourceLangName} to ${replyLangName}`);
+    console.log(`Processing request: mode=${mode}, text="${heardText}", source=${sourceLangName}, target=${replyLangName}`);
 
-    const systemPrompt = `You are a helpful conversation assistant. The user understands ${sourceLangName} but needs help formulating natural, fluent replies in ${replyLangName}.
+    let systemPrompt = "";
+    let userPrompt = "";
 
-Your task:
-1. Understand what was said to the user (in ${sourceLangName})
-2. Generate a natural, contextually appropriate reply in ${replyLangName}
-3. Keep the reply conversational, friendly, and natural-sounding
-4. Match the formality level of the original message
-5. If the original is a question, provide a helpful answer
-6. If the original is a statement, provide an appropriate response
+    if (mode === "translate") {
+      systemPrompt = `You are a professional translator. 
+      Your task is to translate the text EXACTLY from ${sourceLangName} to ${replyLangName}.
+      
+      IMPORTANT:
+      - Output ONLY the translated text. 
+      - Do not add explanations, notes, or extra punctuation.
+      - Maintain the original tone and meaning.`;
 
-IMPORTANT:
-- Only output the reply in ${replyLangName}, nothing else
-- Do not include translations or explanations
-- Keep responses concise but complete (1-3 sentences typically)
-- Make the reply sound like a native speaker would say it`;
+      userPrompt = `Translate the following to ${replyLangName}: "${heardText}"`;
+    } else {
+      // Default: Reply Mode (Helper)
+      systemPrompt = `You are a helpful conversation assistant. The user understands ${sourceLangName} but needs help formulating natural, fluent replies in ${replyLangName}.
+
+      Your task:
+      1. Understand what was said to the user (in ${sourceLangName})
+      2. Generate a natural, contextually appropriate reply in ${replyLangName}
+      3. Keep the reply conversational, friendly, and natural-sounding
+      4. Match the formality level of the original message
+      
+      IMPORTANT:
+      - Only output the reply in ${replyLangName}, nothing else
+      - Do not include translations or explanations
+      - Keep responses concise but complete (1-3 sentences typically)`;
+
+      userPrompt = `Someone said: "${heardText}"\n\nGenerate a natural reply in ${replyLangName}:`;
+    }
 
     const response = await fetch(AI_GATEWAY_URL, {
       method: "POST",
@@ -65,13 +80,13 @@ IMPORTANT:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-pro", // Switching to pro for better translation accuracy
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Someone said to me: "${heardText}"\n\nGenerate a natural reply in ${replyLangName}:` },
+          { role: "user", content: userPrompt },
         ],
         max_tokens: 200,
-        temperature: 0.7,
+        temperature: mode === "translate" ? 0.3 : 0.7, // Lower temperature for translation accuracy
       }),
     });
 
@@ -85,18 +100,18 @@ IMPORTANT:
     const reply = data.choices?.[0]?.message?.content?.trim();
 
     if (!reply) {
-      throw new Error("No reply generated");
+      throw new Error("No output generated");
     }
 
-    console.log(`Generated reply: "${reply}"`);
+    console.log(`Generated output: "${reply}"`);
 
     return new Response(
       JSON.stringify({ reply }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
-    console.error("Error generating reply:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to generate reply";
+    console.error("Error processing request:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to process request";
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
