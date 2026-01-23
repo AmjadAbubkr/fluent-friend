@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, MessageCircle, Sparkles, Globe, History, LogOut, User } from "lucide-react";
+import { ArrowRight, MessageCircle, Sparkles, Globe, History, LogOut, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LanguageSelector, languages, type Language } from "@/components/LanguageSelector";
 import { ConversationView } from "@/components/ConversationView";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/components/theme-provider";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, signOut, loading } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   // App Mode State
   const [activeTab, setActiveTab] = useState<"helper" | "translator">("helper");
@@ -84,6 +86,16 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-colors"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <Moon className="w-5 h-5 text-muted-foreground" />
+              )}
+            </button>
             <button
               onClick={() => navigate("/history")}
               className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-secondary transition-colors"
