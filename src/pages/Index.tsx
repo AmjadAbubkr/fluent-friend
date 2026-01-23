@@ -31,8 +31,23 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-surface animate-fade-in">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-20 h-20 rounded-[2.5rem] gradient-warm flex items-center justify-center shadow-glow animate-pulse">
+            <MessageCircle className="w-10 h-10 text-primary-foreground" />
+          </div>
+          <div className="space-y-2 text-center">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Convo</h2>
+            <p className="text-sm font-medium text-muted-foreground/60 uppercase tracking-[0.2em]">
+              developed by amjad abubkr
+            </p>
+          </div>
+          <div className="mt-4 flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -91,8 +106,8 @@ const Index = () => {
           <button
             onClick={() => setActiveTab("helper")}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === "helper"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
               }`}
           >
             <Sparkles className="w-4 h-4" />
@@ -101,8 +116,8 @@ const Index = () => {
           <button
             onClick={() => setActiveTab("translator")}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === "translator"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
               }`}
           >
             <Globe className="w-4 h-4" />

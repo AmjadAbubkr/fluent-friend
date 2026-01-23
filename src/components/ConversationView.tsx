@@ -160,7 +160,7 @@ export function ConversationView({ sourceLanguage, targetLanguage, mode, onBack 
   };
 
   return (
-    <div className="min-h-screen flex flex-col pt-safe-top pb-safe-bottom">
+    <div className="min-h-screen flex flex-col pt-safe-top pb-6 bg-gradient-surface">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container flex items-center justify-between h-16">
@@ -196,7 +196,7 @@ export function ConversationView({ sourceLanguage, targetLanguage, mode, onBack 
       )}
 
       {/* Messages */}
-      <div className="flex-1 container py-6 space-y-4 overflow-y-auto">
+      <div className="flex-1 container py-8 space-y-6 overflow-y-auto">
         {messages.length === 0 && !isListening && !interimTranscript && (
           <div className="flex flex-col items-center justify-center h-64 text-center animate-fade-in">
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
@@ -247,12 +247,12 @@ export function ConversationView({ sourceLanguage, targetLanguage, mode, onBack 
       </div>
 
       {/* Listening Controls */}
-      <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-8 pb-8">
-        <div className="container flex flex-col items-center gap-4">
+      <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-12 pb-8">
+        <div className="container flex flex-col items-center gap-6 px-6">
           {isListening && (
-            <div className="flex items-center gap-2 text-primary animate-fade-in">
+            <div className="flex items-center gap-3 text-primary animate-fade-in bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
               <WaveformVisualizer isActive={true} />
-              <span className="text-sm font-medium">Listening...</span>
+              <span className="text-sm font-semibold">Listening...</span>
             </div>
           )}
 
